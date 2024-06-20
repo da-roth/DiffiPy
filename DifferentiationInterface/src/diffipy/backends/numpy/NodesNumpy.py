@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -154,3 +155,11 @@ class ResultNodeNumpy(ResultNode):
         jitted_numpy_func = jit(nopython=True)(numpy_func)
 
         return  jitted_numpy_func# numpy_func
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeNumpy(DotProductNode):
+    def Run(self):
+        return np.dot(self.left, self.right)

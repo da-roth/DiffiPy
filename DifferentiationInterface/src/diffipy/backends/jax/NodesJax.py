@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -176,3 +177,11 @@ class ResultNodeJAX(ResultNode):
         jax.make_jaxpr(numpy_func)
         return  numpy_func#jitted_numpy_func# numpy_func
 
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeTF(DotProductNode):
+    def Run(self):
+        return jax.numpy.dot(self.left, self.right)

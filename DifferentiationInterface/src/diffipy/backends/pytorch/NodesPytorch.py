@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -199,3 +200,12 @@ class ResultNodeTorch(ResultNode):
                 return wrapped_func
 
             return torch_func#myfunc_wrapper(torch_func) #returning it in such a way that it needs tensor inputs for now
+    
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeTorch(DotProductNode):
+    def Run(self):
+        return torch.matmul(self.left, self.right)

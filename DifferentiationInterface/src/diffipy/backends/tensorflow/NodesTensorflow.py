@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -163,3 +164,11 @@ class ResultNodeTF(ResultNode):
             input_names = input_dict.keys()
             tensorflow_func = BackendHelper.create_function_from_expression(expression, input_names,  {'tf': tf})
             return tensorflow_func#myfunc_wrapper(tensorflow_func) #returning it in such a way that it needs tensor inputs for now
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeTF(DotProductNode):
+    def Run(self):
+        return tf.linalg.matvec(self.left, self.right)
