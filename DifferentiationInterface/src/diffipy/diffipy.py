@@ -113,5 +113,36 @@ def if_(condition, true_value, false_value):
     if_class = BackendConfig.backend_classes[BackendConfig.backend]["if"]
     return if_class(condition, true_value, false_value)
 
+def dot(left, right):
+    dot_class = BackendConfig.backend_classes[BackendConfig.backend]["dot"]
+    return dot_class(left, right)
 
+
+
+# Print str in one line
+def HessianString(hessian):
+    import textwrap
+    import numpy as np
+    
+    # Check if the hessian is a list and flatten if necessary
+    if isinstance(hessian, list):
+        # Check if it's a list of lists or a flat list
+        if all(isinstance(item, list) for item in hessian):
+            hessian = np.array(hessian)
+        else:
+            hessian = np.array([hessian])  # Wrap flat list in another list to make it 2D
+
+    
+    # Check if the hessian is a TensorFlow tensor and convert to numpy array if necessary
+    elif isinstance(hessian, tf.Tensor):
+        hessian = hessian.numpy()
+
+    # Check if the hessian is a PyTorch tensor and convert to numpy array if necessary
+    elif 'torch' in globals() and isinstance(hessian, torch.Tensor):
+        hessian = hessian.detach().cpu().numpy()
+
+
+    hessian_str = np.array2string(hessian, separator=', ')
+    hessian_str = textwrap.fill(hessian_str, width=70, subsequent_indent='')
+    return hessian_str
 

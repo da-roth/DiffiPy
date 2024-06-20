@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -126,7 +127,7 @@ class DifferentiationNodeTorch(DifferentiationNode):
                 forward_evaluation = self.Run()
 
                 # Backward pass
-                forward_evaluation.backward()
+                forward_evaluation.backward(retain_graph=True)
 
                 # Get the gradient
                 derivative = direction.value.grad.item()
@@ -140,12 +141,36 @@ class DifferentiationNodeTorch(DifferentiationNode):
             forward_evaluation = self.Run()
 
             # Backward pass
-            forward_evaluation.backward()
+            forward_evaluation.backward(retain_graph=True)
 
             # Get the gradient
             derivative = self.diffDirection.value.grad.item()
             return derivative
-    
+        
+    def backend_specific_hessian(self):
+        if isinstance(self.diffDirection, list):
+            variables = [direction.value for direction in self.diffDirection]
+        else:
+            variables = [self.diffDirection.value]
+        
+        # Compute gradient
+        grad = torch.autograd.grad(self.Run(), variables, create_graph=True)
+        hessian = []
+
+        # Compute Hessian. ToDo: Is this the most efficient way?
+        for grad_i in grad:
+            hessian_row = []
+            for var in variables:
+                # Compute the second derivative
+                hess = torch.autograd.grad(grad_i, var, retain_graph=True, allow_unused=True)[0]
+                if hess is None:
+                    hessian_row.append(0.0)
+                else:
+                    hessian_row.append(hess.item())
+            hessian.append(hessian_row)
+
+        return torch.tensor(hessian)
+
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
@@ -199,3 +224,12 @@ class ResultNodeTorch(ResultNode):
                 return wrapped_func
 
             return torch_func#myfunc_wrapper(torch_func) #returning it in such a way that it needs tensor inputs for now
+    
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeTorch(DotProductNode):
+    def Run(self):
+        return torch.matmul(self.left, self.right)

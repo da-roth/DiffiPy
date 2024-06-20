@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ...NodesLinearAlgebra import *
 from ..BackendHelper import *
 
 # Import backend specific packages
@@ -130,6 +131,29 @@ class DifferentiationNodeTF(DifferentiationNode):
 
             gradient = tape.gradient(forward_evaluation, self.diffDirection.value).numpy()
             return gradient
+        
+    def backend_specific_hessian(self):
+        if not isinstance(self.diffDirection, list) or len(self.diffDirection) < 2:
+            raise ValueError("diffDirection should be a list of at least two directions for Hessian computation")
+
+        # Extract variables from directions
+        variables = [direction.value for direction in self.diffDirection]
+
+        with tf.GradientTape(persistent=True) as tape2:
+            with tf.GradientTape() as tape1:
+                forward_evaluation = self.Run()
+            
+            grads = tape1.gradient(forward_evaluation, variables)
+
+        hessian = []
+        for grad in grads:
+            row = []
+            for variable in variables:
+                second_grad = tape2.gradient(grad, variable)
+                row.append(second_grad.numpy())
+            hessian.append(row)
+
+        return hessian
 
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
@@ -163,3 +187,11 @@ class ResultNodeTF(ResultNode):
             input_names = input_dict.keys()
             tensorflow_func = BackendHelper.create_function_from_expression(expression, input_names,  {'tf': tf})
             return tensorflow_func#myfunc_wrapper(tensorflow_func) #returning it in such a way that it needs tensor inputs for now
+
+##
+## LinAlg nodes
+##
+
+class DotProductNodeTF(DotProductNode):
+    def Run(self):
+        return tf.linalg.matvec(self.left, self.right)

@@ -23,6 +23,7 @@ class DifferentiationNode(UnitaryNode):
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
+
 class ResultNode(Node):
     def __init__(self, operationNode):
         super().__init__()

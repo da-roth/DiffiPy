@@ -13,7 +13,7 @@ This package provides a backend-agnostic interface for the differentiation of sc
 
 - **Graph Recording Tool**: Provides a graph recording tool using a syntax identical to numpy, enabling straightforward transition and enhanced computational graph analysis.
 - **Minimal Refactoring Required**: Transitioning from numpy to diffipy involves simple changes, making it easy to integrate into existing projects.
-- **Backend-Agnostic**: Supports various AAD backends, providing flexibility and extensibility. S
+- **Backend-Agnostic**: Supports various AAD backends, providing flexibility and extensibility.
 - **Performance Testing**: Testing and benchmarking utilities accessible to users with [DiffererntiationInterfaceTest](https://github.com/da-roth/DiffiPy/tree/main/DifferentiationInterfaceTest)
 
 ## Example
@@ -94,6 +94,10 @@ for backend in backend_array:
 # tensorflow   13.082916    [15.6541605, 2.0137527]
 # jax          13.082915    [15.6541595, 2.0137526]  
 ```
+
+## Changelog
+- [0.0.1] - [0.0.9]: Initial versions
+- [0.0.10] 07/24: Added Hessian support.
 
 ## General remarks
 
