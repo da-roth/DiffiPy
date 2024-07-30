@@ -124,10 +124,14 @@ def HessianString(hessian):
     import textwrap
     import numpy as np
     
-    # Check if the hessian is a list of lists and convert to numpy array if necessary
+    # Check if the hessian is a list and flatten if necessary
     if isinstance(hessian, list):
-        # Flatten the list if it contains numpy arrays inside
-        hessian = np.array([[np.array(item) if isinstance(item, (np.ndarray, list)) else item for item in sublist] for sublist in hessian])
+        # Check if it's a list of lists or a flat list
+        if all(isinstance(item, list) for item in hessian):
+            hessian = np.array(hessian)
+        else:
+            hessian = np.array([hessian])  # Wrap flat list in another list to make it 2D
+
     
     # Check if the hessian is a TensorFlow tensor and convert to numpy array if necessary
     elif isinstance(hessian, tf.Tensor):

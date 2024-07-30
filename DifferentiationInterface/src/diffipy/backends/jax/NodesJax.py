@@ -148,6 +148,49 @@ class DifferentiationNodeJAX(DifferentiationNode):
            
             return gradient[gradient_key]
     
+    def backend_specific_hessian(self):
+        input_variables = self.get_inputs()
+        #print(input_variables)
+        input_dict = {var.identifier: var.value for var in input_variables}
+
+        myfunc = self.operand.get_optimized_executable(input_dict, input_dict)
+        
+        result_class = ResultNodeJAX(self)
+        
+        _, _, hessian = result_class.eval_and_grad_and_hessian_of_function(myfunc, input_dict, input_dict)
+
+        
+        if isinstance(self.diffDirection, list):
+                    hessians = {}
+                    for direction in self.diffDirection:
+                        if isinstance(direction, VariableNodeJAX):
+                            hessian_key = direction.identifier
+                        else:
+                            hessian_key = direction
+                        
+                        if hessian_key not in hessian:
+                            raise ValueError(f"Hessian for '{hessian_key}' not found in the computed hessians.")
+                        
+                        hessians[hessian_key] = hessian[hessian_key]
+                    # Since hessian is a nested dictionary, handle nested values
+                    hessians_as_array = []
+                    for key, sub_hessian in hessians.items():
+                        for sub_key, value in sub_hessian.items():
+                            hessians_as_array.append(value.block_until_ready().item())
+                    return hessians_as_array
+        else:
+            # Handle the case where diffDirection is not a list
+            if isinstance(self.diffDirection, VariableNodeJAX):
+                hessian_key = self.diffDirection.identifier
+            else:
+                hessian_key = self.diffDirection
+            
+            if hessian_key not in hessian:
+                raise ValueError(f"Hessian for '{hessian_key}' not found in the computed hessians.")
+        
+            sub_hessian = hessian[hessian_key]
+            hessian_as_array = {sub_key: value.block_until_ready().item() for sub_key, value in sub_hessian.items()}
+            return hessian_as_array
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
@@ -165,6 +208,23 @@ class ResultNodeJAX(ResultNode):
         gradient_all_directions = gradient_func(input_dict)
         gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
         return result_optimized, gradient
+    
+    def eval_and_grad_and_hessian_of_function(self, myfunc, input_dict, diff_dict):
+        result_optimized = myfunc(**input_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
+        def myfunc_with_dict(args_dict):
+            return myfunc(**args_dict)
+        
+        #Compute the gradient
+        gradient_func = jax.grad(myfunc_with_dict)
+        gradient_all_directions = gradient_func(input_dict)
+        gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
+
+        # Compute the Hessian of the function
+        hessian_func = jax.hessian(myfunc_with_dict)
+        hessian_all_directions = hessian_func(input_dict)
+        hessian = {key: {inner_key: hessian_all_directions[key][inner_key] for inner_key in diff_dict.keys()} for key in diff_dict.keys()}
+
+        return result_optimized, gradient, hessian
     
     def create_optimized_executable(self, input_dict, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
         expression = str(self.operationNode)
