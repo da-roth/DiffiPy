@@ -113,5 +113,8 @@ def if_(condition, true_value, false_value):
     if_class = BackendConfig.backend_classes[BackendConfig.backend]["if"]
     return if_class(condition, true_value, false_value)
 
+def dot(left, right):
+    dot_class = BackendConfig.backend_classes[BackendConfig.backend]["dot"]
+    return dot_class(left, right)
 
 
