@@ -131,6 +131,29 @@ class DifferentiationNodeTF(DifferentiationNode):
 
             gradient = tape.gradient(forward_evaluation, self.diffDirection.value).numpy()
             return gradient
+        
+    def backend_specific_hessian(self):
+        if not isinstance(self.diffDirection, list) or len(self.diffDirection) < 2:
+            raise ValueError("diffDirection should be a list of at least two directions for Hessian computation")
+
+        # Extract variables from directions
+        variables = [direction.value for direction in self.diffDirection]
+
+        with tf.GradientTape(persistent=True) as tape2:
+            with tf.GradientTape() as tape1:
+                forward_evaluation = self.Run()
+            
+            grads = tape1.gradient(forward_evaluation, variables)
+
+        hessian = []
+        for grad in grads:
+            row = []
+            for variable in variables:
+                second_grad = tape2.gradient(grad, variable)
+                row.append(second_grad.numpy())
+            hessian.append(row)
+
+        return hessian
 
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
