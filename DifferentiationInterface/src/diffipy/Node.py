@@ -112,6 +112,15 @@ class Node:
         instance_grad_class = grad_class(self, diffDirection)
         return instance_grad_class.backend_specific_grad()
     
+    
+    def hessian(self, diffDirection = None):
+        from .backend_config import BackendConfig
+        grad_class = BackendConfig.backend_valuation_and_grad_classes[BackendConfig.backend]["grad"]
+        if diffDirection is None:
+            diffDirection = self.get_inputs_with_diff()
+        instance_grad_class = grad_class(self, diffDirection)
+        return instance_grad_class.backend_specific_hessian()
+    
     #
     # Additions for graph analysis
     #

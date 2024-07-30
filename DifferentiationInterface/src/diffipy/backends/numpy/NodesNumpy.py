@@ -94,21 +94,23 @@ class DifferentiationNodeNumpy(DifferentiationNode):
 
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
+        self.gradient = None
+        self.h = 0.0001
 
     def backend_specific_grad(self):
         result = self.Run()
-        h = 0.00001
         # Handle the case where self.diffDirection is a list, hence Gradient
         if isinstance(self.diffDirection, list):
             gradients = []
             for direction in self.diffDirection:
                 original_value = direction.value
-                direction.value = original_value + h
+                direction.value = original_value + self.h
                 result_h = self.Run()
-                gradient = (result_h - result) / h
+                gradient = (result_h - result) / self.h
                 gradients.append(gradient)
                 # Reset the value to its original state
                 direction.value = original_value
+            self.gradient = gradients
             return gradients
         else:
             # Handle the case where self.diffDirection is a single diff direction
@@ -118,8 +120,40 @@ class DifferentiationNodeNumpy(DifferentiationNode):
             gradient = (result_h - result) / h
             # Reset the value to its original state
             self.diffDirection.value = original_value
+            self.gradient = gradient
             return gradient
-    
+        
+    def backend_specific_hessian(self):
+            if self.gradient is None:
+                self.backend_specific_grad()
+            grad = self.gradient
+
+            directions = self.diffDirection if isinstance(self.diffDirection, list) else [self.diffDirection]
+            n = len(directions)
+            hessian = np.zeros((n, n))
+
+            for i in range(n):
+                original_value_i = directions[i].value
+                directions[i].value = original_value_i + self.h
+                grad_i = self.compute_gradient_at_point(directions)
+                hessian[:, i] = (grad_i - grad) / self.h
+                directions[i].value = original_value_i
+
+            return hessian
+        
+    def compute_gradient_at_point(self, directions):
+        result = self.Run()
+        gradients = []
+        for direction in directions:
+            original_value = direction.value
+            direction.value = original_value + self.h
+            result_h = self.Run()
+            gradient = (result_h - result) / self.h
+            gradients.append(gradient)
+            # Reset the value to its original state
+            direction.value = original_value
+        return np.array(gradients)
+        
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
