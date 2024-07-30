@@ -118,3 +118,17 @@ def dot(left, right):
     return dot_class(left, right)
 
 
+
+# Print str in one line
+def HessianString(hessian):
+    import textwrap
+    import numpy as np
+    
+    # Check if the hessian is a PyTorch tensor and convert to numpy array if necessary
+    if isinstance(hessian, torch.Tensor):
+        hessian = hessian.detach().cpu().numpy()
+
+    hessian_str = np.array2string(hessian, separator=', ')
+    hessian_str = textwrap.fill(hessian_str, width=70, subsequent_indent='')
+    return hessian_str
+

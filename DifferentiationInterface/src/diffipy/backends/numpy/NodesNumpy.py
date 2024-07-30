@@ -115,9 +115,9 @@ class DifferentiationNodeNumpy(DifferentiationNode):
         else:
             # Handle the case where self.diffDirection is a single diff direction
             original_value = self.diffDirection.value
-            self.diffDirection.value = original_value + h
+            self.diffDirection.value = original_value + self.h
             result_h = self.Run()
-            gradient = (result_h - result) / h
+            gradient = (result_h - result) / self.h
             # Reset the value to its original state
             self.diffDirection.value = original_value
             self.gradient = gradient
